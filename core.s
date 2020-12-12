@@ -9,7 +9,7 @@
 // so the label can be used by other files
 // https://www.ic.unicamp.br/~celio/mc404-2014/docs/gnu-arm-directives.pdf
 .global vtable
-.global reset_handler
+.global Reset_Handler
 .global Default_handler
 
 /* Vector table
@@ -19,12 +19,13 @@
  * We set the vtable to be a data object (apposed to a func or tls_object)
  */
  // https://sourceware.org/binutils/docs/as/Section.html
-.section .isr_vector,"a"
+.section .isr_vector,"xa"
 .type vtable, %object
 .size vtable, .-vtable
 vtable:
+  //.word _estack
   .word _estack
-  .word reset_handler
+  .word Reset_Handler
   .word NMI_Handler
   .word HardFault_Handler
   .word	MemManage_Handler
@@ -420,24 +421,54 @@ Default_Handler:
 
 /*
  * Reset handler called on reset
- * MOV wroks for immediates 0-255, hence we need LDR to load 40byte work form mem to reg
+ * MOV works for immediates 0-255, hence we need LDR to load 40byte work form mem to reg
  * = symbol to put hex word nearby in mem and load that address into the register
  */
-.type reset_handler, %function
-reset_handler:
-  // Set sp to end of stack
-  // _estack defined in linker script
-  MOV sp, r0
+.type Reset_Handler, %function
+Reset_Handler:
   LDR r7, =0xDEADBEEF
 
-  // Set dummy values
-  //LDR r8, =0xDEADBEDD
-  MOVS r0, #0
+  // 1) copy .data section from FLASH (LMA) to RAM (VMA)
+  MOVS r0, #0 // used to store current progress
+  LDR r1, =_sdata;
+  LDR r2, =_edata;
+  LDR r3, =_la_data
 
-  main_loop:
-    // ADDS to update flags
-    ADDS r0, r0, #1
-    B main_loop
-.size reset_handler, .-reset_handler
+  B copy_data_loop
+    
+
+
+
+  // copy next word
+  copy_data:
+    LDR r4, [r3, r0] // get FLASH data at current offset
+    STR r4, [r1, r0] // store in SRAM
+    ADDS r0, r0, #4  // incr. to next word
+    
+  // until gone through entire .data section, copy data from FLASH -> SRAM
+  copy_data_loop:
+    ADDS r4, r1, r0
+    CMP r2, r4 // r2-r4 (_edata - current_offset)
+    BGT copy_data // copy more data if r2 (_edata) greater than r4 (current_offset)
+
+  // 2) Clear .bss section to 0x0
+  MOVS r0, #0
+  LDR r1, =__bss_start__
+  LDR r2, =__bss_end__
+  B reset_bss_loop
+
+  reset_bss:
+    STR r0, [r1]
+    ADDS r1, r1, #4
+
+
+  reset_bss_loop:
+    CMP r2, r1
+    BGT reset_bss
+
+  // 3) Branch to main
+  B main
+
+.size Reset_Handler, .-Reset_Handler
 
 

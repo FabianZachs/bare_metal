@@ -4,7 +4,11 @@ MEMORY
   SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
-_estack = 0x20001000;
+/* used to throw linker error if not enough space left for stack and heap 1KB */
+_MIN_RAM = 0x400;
+
+_estack = 0x20002000;
+
 SECTIONS
 {
   .text :
@@ -16,9 +20,12 @@ SECTIONS
     . = ALIGN(4);
   }> FLASH
 
+  _la_data = LOADADDR(.data);
   .data :
   {
+    _sdata = .;
     *(.data)
+    _edata = .;
     . = ALIGN(4);
   }>SRAM AT>FLASH
 
@@ -29,4 +36,13 @@ SECTIONS
     . = ALIGN(4);
     __bss_end__ = .;
   }>SRAM
+
+  /* Space set aside for the application's heap/stack. */
+  .dynamic_allocations :
+  {
+    _ssystem_ram = .;
+    . = . + _MIN_RAM;
+    . = ALIGN(4);
+    _esystem_ram = .;
+  }
 }
