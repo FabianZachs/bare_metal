@@ -21,9 +21,10 @@ Linker script and memory map
 LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crti.o
 LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtbegin.o
 LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/crt0.o
+LOAD syscalls.o
 LOAD main.o
 LOAD core.o
-LOAD syscalls.o
+LOAD vector_table.o
 START GROUP
 LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/libgcc.a
 LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a
@@ -39,7 +40,7 @@ LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtn.
 
 .text           0x0000000008000000      0x2c8
  *(.isr_vector)
- .isr_vector    0x0000000008000000      0x1f0 core.o
+ .isr_vector    0x0000000008000000      0x1aa vector_table.o
                 0x0000000008000000                vtable
                 0x00000000080001a8                HASH_RNG_IRQHandler
                 0x00000000080001a8                EXTI2_IRQHandler
@@ -121,8 +122,6 @@ LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtn.
                 0x00000000080001a8                EXTI1_IRQHandler
                 0x00000000080001a8                USART2_IRQHandler
                 0x00000000080001a8                I2C2_ER_IRQHandler
-                0x00000000080001a8                DMA1_Stream3_IRQHandler
-                0x00000000080001a8                RTC_Alarm_IRQHandler
                 0x00000000080001a8                DMA2_Stream1_IRQHandler
                 0x00000000080001a8                CAN1_SCE_IRQHandler
                 0x00000000080001a8                DMA2_Stream4_IRQHandler
@@ -133,19 +132,23 @@ LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtn.
                 0x00000000080001a8                DMA1_Stream4_IRQHandler
                 0x00000000080001a8                I2C1_ER_IRQHandler
                 0x00000000080001a8                DMA2_Stream6_IRQHandler
-                0x00000000080001aa                Reset_Handler
+                0x00000000080001a8                RTC_Alarm_IRQHandler
+                0x00000000080001a8                DMA1_Stream3_IRQHandler
  *(.text)
- .text          0x00000000080001f0        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crti.o
- .text          0x00000000080001f0       0x40 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtbegin.o
- .text          0x0000000008000230       0x7c /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/crt0.o
-                0x0000000008000230                _stack_init
-                0x0000000008000238                _mainCRTStartup
-                0x0000000008000238                _start
- .text          0x00000000080002ac       0x12 main.o
-                0x00000000080002ac                main
- .text          0x00000000080002be        0x0 core.o
- .text          0x00000000080002be        0xa syscalls.o
-                0x00000000080002be                _exit
+ .text          0x00000000080001aa        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crti.o
+ *fill*         0x00000000080001aa        0x2 
+ .text          0x00000000080001ac       0x40 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtbegin.o
+ .text          0x00000000080001ec       0x7c /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/crt0.o
+                0x00000000080001ec                _stack_init
+                0x00000000080001f4                _mainCRTStartup
+                0x00000000080001f4                _start
+ .text          0x0000000008000268        0xa syscalls.o
+                0x0000000008000268                _exit
+ .text          0x0000000008000272       0x12 main.o
+                0x0000000008000272                main
+ .text          0x0000000008000284       0x44 core.o
+                0x0000000008000284                Reset_Handler
+ .text          0x00000000080002c8        0x0 vector_table.o
  .text          0x00000000080002c8        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-exit.o)
  .text          0x00000000080002c8        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-impure.o)
  .text          0x00000000080002c8        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-init.o)
@@ -222,9 +225,10 @@ LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtn.
  .data          0x0000000020000000        0x4 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtbegin.o
                 0x0000000020000000                __dso_handle
  .data          0x0000000020000004        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/crt0.o
+ .data          0x0000000020000004        0x0 syscalls.o
  .data          0x0000000020000004        0x0 main.o
  .data          0x0000000020000004        0x0 core.o
- .data          0x0000000020000004        0x0 syscalls.o
+ .data          0x0000000020000004        0x0 vector_table.o
  .data          0x0000000020000004        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-exit.o)
  .data          0x0000000020000004        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-impure.o)
  .data          0x0000000020000004        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-init.o)
@@ -260,9 +264,10 @@ LOAD /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtn.
  .bss           0x0000000020000070        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crti.o
  .bss           0x0000000020000070       0x1c /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtbegin.o
  .bss           0x000000002000008c        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/crt0.o
+ .bss           0x000000002000008c        0x0 syscalls.o
  .bss           0x000000002000008c        0x0 main.o
  .bss           0x000000002000008c        0x0 core.o
- .bss           0x000000002000008c        0x0 syscalls.o
+ .bss           0x000000002000008c        0x0 vector_table.o
  .bss           0x000000002000008c        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-exit.o)
  .bss           0x000000002000008c        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-impure.o)
  .bss           0x000000002000008c        0x0 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-init.o)
@@ -291,62 +296,71 @@ LOAD linker stubs
  .ARM.attributes
                 0x000000000000004c       0x1c /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/crt0.o
  .ARM.attributes
-                0x0000000000000068       0x2e main.o
+                0x0000000000000068       0x2e syscalls.o
  .ARM.attributes
-                0x0000000000000096       0x21 core.o
+                0x0000000000000096       0x2e main.o
  .ARM.attributes
-                0x00000000000000b7       0x2e syscalls.o
+                0x00000000000000c4       0x21 core.o
  .ARM.attributes
-                0x00000000000000e5       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-exit.o)
+                0x00000000000000e5       0x21 vector_table.o
  .ARM.attributes
-                0x0000000000000113       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-impure.o)
+                0x0000000000000106       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-exit.o)
  .ARM.attributes
-                0x0000000000000141       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-init.o)
+                0x0000000000000134       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-impure.o)
  .ARM.attributes
-                0x000000000000016f       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-memset.o)
+                0x0000000000000162       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-init.o)
  .ARM.attributes
-                0x000000000000019d       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtend.o
+                0x0000000000000190       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-memset.o)
  .ARM.attributes
-                0x00000000000001cb       0x1e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtn.o
+                0x00000000000001be       0x2e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtend.o
+ .ARM.attributes
+                0x00000000000001ec       0x1e /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/thumb/v7e-m/nofp/crtn.o
 
 .comment        0x0000000000000000       0x4c
- .comment       0x0000000000000000       0x4c main.o
+ .comment       0x0000000000000000       0x4c syscalls.o
                                          0x4d (size before relaxing)
- .comment       0x000000000000004c       0x4d syscalls.o
+ .comment       0x000000000000004c       0x4d main.o
 
-.debug_info     0x0000000000000000       0xce
- .debug_info    0x0000000000000000       0x55 main.o
- .debug_info    0x0000000000000055       0x26 core.o
- .debug_info    0x000000000000007b       0x53 syscalls.o
+.debug_info     0x0000000000000000       0xf4
+ .debug_info    0x0000000000000000       0x53 syscalls.o
+ .debug_info    0x0000000000000053       0x55 main.o
+ .debug_info    0x00000000000000a8       0x26 core.o
+ .debug_info    0x00000000000000ce       0x26 vector_table.o
 
-.debug_abbrev   0x0000000000000000       0xaf
- .debug_abbrev  0x0000000000000000       0x4c main.o
- .debug_abbrev  0x000000000000004c       0x14 core.o
- .debug_abbrev  0x0000000000000060       0x4f syscalls.o
+.debug_abbrev   0x0000000000000000       0xc3
+ .debug_abbrev  0x0000000000000000       0x4f syscalls.o
+ .debug_abbrev  0x000000000000004f       0x4c main.o
+ .debug_abbrev  0x000000000000009b       0x14 core.o
+ .debug_abbrev  0x00000000000000af       0x14 vector_table.o
 
-.debug_aranges  0x0000000000000000       0x60
+.debug_aranges  0x0000000000000000       0x80
  .debug_aranges
-                0x0000000000000000       0x20 main.o
+                0x0000000000000000       0x20 syscalls.o
  .debug_aranges
-                0x0000000000000020       0x20 core.o
+                0x0000000000000020       0x20 main.o
  .debug_aranges
-                0x0000000000000040       0x20 syscalls.o
+                0x0000000000000040       0x20 core.o
+ .debug_aranges
+                0x0000000000000060       0x20 vector_table.o
 
-.debug_line     0x0000000000000000       0xd9
- .debug_line    0x0000000000000000       0x40 main.o
- .debug_line    0x0000000000000040       0x58 core.o
- .debug_line    0x0000000000000098       0x41 syscalls.o
+.debug_line     0x0000000000000000      0x114
+ .debug_line    0x0000000000000000       0x41 syscalls.o
+ .debug_line    0x0000000000000041       0x40 main.o
+ .debug_line    0x0000000000000081       0x54 core.o
+ .debug_line    0x00000000000000d5       0x3f vector_table.o
 
-.debug_str      0x0000000000000000       0xd6
- .debug_str     0x0000000000000000       0xa9 main.o
- .debug_str     0x00000000000000a9       0x15 core.o
+.debug_str      0x0000000000000000       0xe5
+ .debug_str     0x0000000000000000       0xb5 syscalls.o
+ .debug_str     0x00000000000000b5        0xc main.o
+                                         0xa9 (size before relaxing)
+ .debug_str     0x00000000000000c1       0x15 core.o
                                          0x51 (size before relaxing)
- .debug_str     0x00000000000000be       0x18 syscalls.o
-                                         0xb5 (size before relaxing)
+ .debug_str     0x00000000000000d6        0xf vector_table.o
+                                         0x59 (size before relaxing)
 
 .debug_frame    0x0000000000000000       0xcc
- .debug_frame   0x0000000000000000       0x2c main.o
- .debug_frame   0x000000000000002c       0x2c syscalls.o
+ .debug_frame   0x0000000000000000       0x2c syscalls.o
+ .debug_frame   0x000000000000002c       0x2c main.o
  .debug_frame   0x0000000000000058       0x28 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-exit.o)
  .debug_frame   0x0000000000000080       0x2c /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-init.o)
  .debug_frame   0x00000000000000ac       0x20 /Applications/ARM/bin/../lib/gcc/arm-none-eabi/9.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/nofp/libc_nano.a(lib_a-memset.o)
