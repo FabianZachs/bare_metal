@@ -1,3 +1,6 @@
 *.o
 *.elf
 *.map
+.DS_Store
+tags
+old_makefiles

@@ -24,9 +24,6 @@ Reset_Handler:
   LDR r3, =_la_data
 
   B copy_data_loop
-    
-
-
 
   // copy next word
   copy_data:
